@@ -140,13 +140,13 @@ func ParseTle(line0 string, line1 string, line2 string) OrbitData {
 // We define the following table structure we want to parse:
 //
 // Constellation
-// ID: string, Name: string
+// ID: int, Name: string
 //
 // Satellites
-// ID: string, LaunchDate: date, ConstellationID: string
+// SATCATID: int, LaunchDate: date, ConstellationID: string
 //
 // SatelliteOrbits
-// ID: string, SatelliteID: string, OrbitData: orbitdata, TLE: string, SourceFileInfo: sourcefileinfo
+// ID: int, SATCATID: int, OrbitData: orbitdata, SourceFileInfo: sourcefileinfo
 //
 func InitDB(sqlitePath string) {
     log.Println("Initializing a new DB...")
@@ -266,6 +266,7 @@ func ParseNInsert(item ScrapedItem, db *sql.DB) {
     }
     h := sha256.New()
     h.Write([]byte(content))
+    file_hash := fmt.Sprintf("%x", h.Sum(nil))
     splitLines := strings.Split(string(content), "\n")
     var nLines int = len(splitLines) / 3
     for i := 0; i < nLines; i++ {
@@ -294,7 +295,7 @@ func ParseNInsert(item ScrapedItem, db *sql.DB) {
             orbitData.Altitude,
             orbitData.Period,
             orbitData.ElementSetNumber,
-            fmt.Sprintf("%x", h.Sum(nil)),
+            file_hash,
             item.URL,
             time.Now().Format("2006-01-02 15:04:05"),
         )
@@ -310,22 +311,13 @@ func ParseNInsert(item ScrapedItem, db *sql.DB) {
 }
 
 func AddDB(sqlitePath string, items *[]ScrapedItem) {
-    sqlite3.Version()
-
     db, err := sql.Open("sqlite3", "file:" + sqlitePath + "?cache=shared")
     if err != nil {
         log.Panic(err)
     }
     defer db.Close()
-
     for _, item := range *items {
-	    if err != nil {
-	    	log.Fatal(err)
-	    }
         ParseNInsert(item, db)
-	    if err != nil {
-	    	log.Fatal(err)
-	    }
     }
 }
 
