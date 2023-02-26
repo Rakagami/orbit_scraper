@@ -4,23 +4,23 @@ This script scrapes current constellation data form celestrak supplemental data 
 
 ## Tables
 
-*Constellations*
+**Constellations**
 
 | ID  | Name   |
 |-------------- | ------- |
 | _Incrementally incresing ID_    | _Name of Constellation_     |
 
-*Satellites*
+**Satellites**
 
 | SATCATID  | ConstellationsID   | LaunchDate   |
 |-------------- | -------------- | -------------- |
-| SATCAT ID    | Foreign Key, Constellation ID     | Launch Date (not yet implemented)  |
+| SATCAT ID    | Foreign Key | Launch Date (not yet implemented)  |
 
-*SatelliteOrbits*
+**SatelliteOrbits**
 
 | ID  | SATCATID   | ORBIT_TLE0   | ORBIT_TLE1   | ORBIT_TLE2   | ORBIT_Epoch | ORBIT_InclinationDeg | ORBIT_RAANDeg | ORBIT_AltitudeKm | ORBIT_PeriodS | ORBIT_ElementSetNumber | FILE_Hash | FILE_URL | FILE_LastAccessed |
 |--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-|--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+|--- | Foreign Key | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 The values used scraped of the TLEs is intended for LEO satellites, which is why only inclination, raan, and altitude is scraped. To get actualy ECI position or groundtrack coordinates we also need to look at the anomalies, but that is a feature for another time.
 Some notes on the columns:
@@ -36,4 +36,4 @@ Either compile the code or run:
 go run scraper.go -d /path/to/your/db/file
 ```
 
-The sqlite database file will be created if it doesn't yet exists
+The sqlite database file will be created if it doesn't yet exists. You can inspect the database with a program like [sqlitebrowser](https://sqlitebrowser.org/).
