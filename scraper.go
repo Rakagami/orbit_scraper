@@ -267,42 +267,54 @@ func ParseNInsert(item ScrapedItem, db *sql.DB) {
     h := sha256.New()
     h.Write([]byte(content))
     file_hash := fmt.Sprintf("%x", h.Sum(nil))
-    splitLines := strings.Split(string(content), "\n")
-    var nLines int = len(splitLines) / 3
-    for i := 0; i < nLines; i++ {
-        idx := i * 3
-        orbitData := ParseTle(splitLines[idx], splitLines[idx+1], splitLines[idx+2])
-        //log.Println(orbitData.Epoch.Format("2006-01-02 15:04:05"))
-        //log.Println(srcFileInfo.LastAccessed.Format("2006-01-02 15:04:05"))
-        //log.Printf("New Satellite %d and Database ID %d\n", orbitData.SatcatNum, constellationID)
-        _ = constellationID
-        _, err = satStmt.Exec(
-            orbitData.SatcatNum,
-            constellationID,
-        )
-        if err != nil {
-            log.Panic(err)
-        }
 
-        _, err = satOrbitStmt.Exec(
-            orbitData.SatcatNum,
-            orbitData.TleLine0,
-            orbitData.TleLine1,
-            orbitData.TleLine2,
-            orbitData.Epoch.Format("2006-01-02 15:04:05"),
-            orbitData.Inclination,
-            orbitData.RAAN,
-            orbitData.Altitude,
-            orbitData.Period,
-            orbitData.ElementSetNumber,
-            file_hash,
-            item.URL,
-            time.Now().Format("2006-01-02 15:04:05"),
-        )
-        if err != nil {
-            log.Panic(err)
+    // Check first if there are SatelliteOrbits with this file hash
+    rows, err = db.Query(fmt.Sprintf(
+        "select * from SatelliteOrbits where FILE_Hash = %q", file_hash,))
+	if err != nil {
+		log.Fatal(err)
+	}
+    if !rows.Next() {
+        splitLines := strings.Split(string(content), "\n")
+        var nLines int = len(splitLines) / 3
+        for i := 0; i < nLines; i++ {
+            idx := i * 3
+            orbitData := ParseTle(splitLines[idx], splitLines[idx+1], splitLines[idx+2])
+            //log.Println(orbitData.Epoch.Format("2006-01-02 15:04:05"))
+            //log.Println(srcFileInfo.LastAccessed.Format("2006-01-02 15:04:05"))
+            //log.Printf("New Satellite %d and Database ID %d\n", orbitData.SatcatNum, constellationID)
+            _ = constellationID
+            _, err = satStmt.Exec(
+                orbitData.SatcatNum,
+                constellationID,
+            )
+            if err != nil {
+                log.Panic(err)
+            }
+
+            _, err = satOrbitStmt.Exec(
+                orbitData.SatcatNum,
+                orbitData.TleLine0,
+                orbitData.TleLine1,
+                orbitData.TleLine2,
+                orbitData.Epoch.Format("2006-01-02 15:04:05"),
+                orbitData.Inclination,
+                orbitData.RAAN,
+                orbitData.Altitude,
+                orbitData.Period,
+                orbitData.ElementSetNumber,
+                file_hash,
+                item.URL,
+                time.Now().Format("2006-01-02 15:04:05"),
+            )
+            if err != nil {
+                log.Panic(err)
+            }
         }
+    } else {
+        log.Printf("Filehash %q for Constellation %q already logged", file_hash, item.Name)
     }
+    rows.Close()
 
 	err = tx.Commit()
 	if err != nil {
